@@ -8,7 +8,7 @@ class ShelfApiService(Component):
     _inherit = "base.rest.service"
     _name = "shelf.new_api.service"
     _usage = "shelfs"
-    _collection = "base.rest.demo.new_api.services"
+    _collection = "base.rest.api.services"
     _description = """
         Shelfs New API Services
         Services developed with the new api provided by base_rest
@@ -65,7 +65,7 @@ class ShelfApiService(Component):
     def search(self, shelf_search_param):
         """
         Search for shelf
-        :param partner_search_param: An instance of shelf.search.param
+        :param shelf_search_param: An instance of shelf.search.param
         :return: List of shelf.short.info
         """
         domain = []
@@ -157,15 +157,10 @@ class ShelfApiService(Component):
         """
         Update shelf informations
         """
-        print(".............................................")
         params = {}
         shelf = self._get_by_row_and_bay(params.get('row'), params.get('bay'))
         shelf.write(params)
         return self._to_json(shelf)
-
-
-
-
 
     @restapi.method(
         [(["/<string:row>/<string:bay>"], "PATCH")],

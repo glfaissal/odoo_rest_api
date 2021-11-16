@@ -9,9 +9,9 @@ class ArticleApiService(Component):
     _inherit = "base.rest.service"
     _name = "article.new_api.service"
     _usage = "article"
-    _collection = "base.rest.demo.new_api.services"
+    _collection = "base.rest.api.services"
     _description = """
-        Partner New API Services
+        Article New API Services
         Services developed with the new api provided by base_rest
     """
 
@@ -56,12 +56,8 @@ class ArticleApiService(Component):
             res.append(ArticleShortInfo(id=a.id, name=a.name))
         return res
 
-    # The following method are 'private' and should be never never NEVER call
-    # from the controller.
-
     def _get(self, _id):
-        return self.env["product.template"].browse(_id)
-
+        return self.env["product.product"].browse(_id)
 
     def _to_json(self, article):
         return {
@@ -103,7 +99,7 @@ class ArticleApiService(Component):
 
     def update(self, _id, **params):
         """
-        Update partner informations
+        Update article informations
         """
         article = self._get(_id)
         article.write(params)

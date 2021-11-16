@@ -8,7 +8,7 @@ class WarehouseApiService(Component):
     _inherit = "base.rest.service"
     _name = "warehouse.new_api.service"
     _usage = "warehouse"
-    _collection = "base.rest.demo.new_api.services"
+    _collection = "base.rest.api.services"
     _description = """
         warehouse New API Services
         Services developed with the new api provided by base_rest
@@ -53,14 +53,14 @@ class WarehouseApiService(Component):
             domain_row_bay.append(("bay", "=", warehouse_search_param.bay))
         if warehouse_search_param.id:
             products.append(warehouse_search_param.id)
-            #domain_id.append(("id", "=", warehouse_search_param.id))
+            #domain_row_bay.append(("id", "=", warehouse_search_param.id))
 
-        if warehouse_search_param:
+        if domain_row_bay:
             locations = self.env["stock.location"].search(domain_row_bay)
             for location in locations:
                 quants = self.env["stock.quant"].search([('location_id','=',location.id)])
                 for quant in quants:
-                    if quant.product_id.id not in products:
+                    if quant.product_id.id not in products and not warehouse_search_param.id:
                         products.append(quant.product_id.id)
 
         res = []
@@ -68,8 +68,6 @@ class WarehouseApiService(Component):
         WarehouseArticleShelfs = self.env.datamodels["warehouse.article.shelfs"]
         ShelfDetailInfo = self.env.datamodels["shelf.detail.warehouse"]
         for w in self.env["product.product"].browse(products):
-            product_locations = []  
-
             # get all locations of the product
             unique_locations = []
             shelfsDetailInfo = []
@@ -84,6 +82,96 @@ class WarehouseApiService(Component):
 
             res.append(WarehouseArticleShelfs(id=w.id, name=w.name, shelfs=shelfsDetailInfo, debug = str(rows)))
         return res
+
+
+    @restapi.method(
+        [(["/"], "POST")],
+        input_param=restapi.Datamodel("warehouse.load.number"),
+        output_param=Datamodel("warehouse.debug"),
+        auth="public",
+    )
+    def post_transfert(self, params):
+        """
+        transfert qte of product in a Shelf
+        """
+        picking_type_id = self.env["stock.picking.type"].search(
+            [("name","=","Internal Transfers")])[0].id
+        location_id = self.env["stock.location"].search(
+            [("name","=","Vendors")])[0].id
+        location_dest_id = self.env["stock.location"].search(
+            [("is_shelf","=",True),("row","=",params.row),("bay","=",params.bay)])[0].id
+
+        product_uom = self.env["uom.uom"].search(
+            [("name","=","Units")], limit=1).id
+
+        random_name = ''.join((random.choice(string.ascii_lowercase) for x in range(10))) 
+
+        move_line = {
+            "name": random_name,
+            "product_uom":product_uom,
+            "product_id":params.id,
+            "product_uom_qty":params.amount
+        }
+
+        transfert_object =self.env["stock.picking"].create(
+            {
+                #"name": random_name,
+                "picking_type_id":picking_type_id,
+                "location_id":location_id,
+                "location_dest_id":location_dest_id,
+                "move_ids_without_package":[(0, 0, move_line)]
+            })
+        transfert_object.action_confirm()
+        transfert_object.button_validate()
+
+        Debugger = self.env.datamodels["warehouse.debug"]
+        return Debugger(console="operation type " + str(picking_type_id) + "location_id" +  str(location_id)+ "location_dest_id" + str(location_dest_id) + "  move line " + str(move_line))
+
+
+    @restapi.method(
+        [(["/"], "PUT")],
+        input_param=restapi.Datamodel("warehouse.load.number"),
+        output_param=Datamodel("warehouse.debug"),
+        auth="public",
+    )
+    def put_pick_article(self, params):
+        """
+        transfert qte of product in a Shelf
+        """
+        picking_type_id = self.env["stock.picking.type"].search(
+            [("name","=","Internal Transfers")], limit=1).id
+        location_dest_id = self.env["stock.location"].search(
+            [("name","=","Customers")], limit=1).id
+        location_id = self.env["stock.location"].search(
+            [("row","=",params.row),("bay","=",params.bay)], limit=1).id
+
+        product_uom = self.env["uom.uom"].search(
+            [("name","=","Units")], limit=1).id
+
+        random_name = ''.join((random.choice(string.ascii_lowercase) for x in range(10))) 
+
+        move_line = {
+            "name": random_name,
+            "product_uom":product_uom,
+            "product_id":params.id,
+            "product_uom_qty": 1
+        }
+
+        transfert_object =self.env["stock.picking"].create(
+            {
+                #"name": random_name,
+                "picking_type_id":picking_type_id,
+                "location_id":location_id,
+                "location_dest_id":location_dest_id,
+                "move_ids_without_package":[(0, 0, move_line)]
+            })
+        transfert_object.action_confirm()
+        #transfert_object.button_validate()
+
+        Debugger = self.env.datamodels["warehouse.debug"]
+        return Debugger(console="operation type " + str(picking_type_id) + "location_id" +  str(location_id)+ "location_dest_id" + str(location_dest_id) + "  move line " + str(move_line))
+
+
 
 
     # Validator

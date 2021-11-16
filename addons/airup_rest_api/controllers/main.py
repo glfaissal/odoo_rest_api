@@ -4,13 +4,13 @@
 from odoo.addons.base_rest.controllers import main
 
 
-class BaseRestAirupPublicApiController(main.RestController):
-    _root_path = "/airup/public/"
+class BaseRestDemoPublicApiController(main.RestController):
+    _root_path = "/api/public/"
     _collection_name = "base.rest.airup.public.services"
     _default_auth = "public"
 
 
-class BaseRestAirupApiController(main.RestController):
-    _root_path = "/airup/api/"
-    _collection_name = "base.rest.airup.api.services"
+class BaseRestDemoNewApiController(main.RestController):
+    _root_path = "/api/"
+    _collection_name = "base.rest.api.services"
     _default_auth = "public"
