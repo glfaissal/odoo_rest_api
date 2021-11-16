@@ -8,7 +8,7 @@ from pprint import pprint as pp
 class ArticleApiService(Component):
     _inherit = "base.rest.service"
     _name = "article.new_api.service"
-    _usage = "article"
+    _usage = "articles"
     _collection = "base.rest.api.services"
     _description = """
         Article New API Services
@@ -16,7 +16,7 @@ class ArticleApiService(Component):
     """
 
     @restapi.method(
-        [(["/<int:id>/get", "/<int:id>"], "GET")],
+        [(["/<int:id>"], "GET")],
         output_param=Datamodel("article.info"),
         auth="public",
     )
@@ -42,7 +42,7 @@ class ArticleApiService(Component):
     def search(self, article_search_param):
         """
         Search for article
-        :param partner_search_param: An instance of partner.search.param
+        :param article_search_param: An instance of partner.search.param
         :return: List of article.short.info
         """
         domain = []
@@ -52,12 +52,16 @@ class ArticleApiService(Component):
             domain.append(("id", "=", article_search_param.id))
         res = []
         ArticleShortInfo = self.env.datamodels["article.short.info"]
-        for a in self.env["product.template"].search(domain):
+        for a in self.env["product.product"].search(domain):
             res.append(ArticleShortInfo(id=a.id, name=a.name))
         return res
 
+    # # The following method are 'private' and should be never never NEVER call
+    # # from the controller.
+
     def _get(self, _id):
         return self.env["product.product"].browse(_id)
+
 
     def _to_json(self, article):
         return {
@@ -71,7 +75,7 @@ class ArticleApiService(Component):
         """
         Create a new article
         """
-        article = self.env["product.template"].create(params)
+        article = self.env["product.product"].create(params)
         return self._to_json(article)
 
     # Validator
@@ -99,17 +103,35 @@ class ArticleApiService(Component):
 
     def update(self, _id, **params):
         """
-        Update article informations
+        Update partner informations
         """
         article = self._get(_id)
         article.write(params)
         return self._to_json(article)
+
+    @restapi.method(
+        [(["/<int:id>"], "PATCH")],
+        input_param=restapi.Datamodel("article.update"),
+        auth="public",
+    )
+    def update_article(self, id, params):
+        """
+        Update Article information
+        """
+
+        article = self._get(id)
+        article.write(params)
+        return {"response": "Update called"}
+
 
     def delete(self, _id):
         """
         Delete method description ...
         """
         article = self._get(_id)
-        article.unlink()
+        #article.unlink()
+        article.product_tmpl_id.active = False
+        article.write({"active":False})
 
         return {"response": "DELETE called with id %s " % _id}
+
